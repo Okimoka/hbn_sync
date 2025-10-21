@@ -5,10 +5,10 @@ This project aims to curate and synchronize EEG and Eye-Tracking data from the [
 
 # Instructions
 
-- Download [Release 11](https://nemar.org/dataexplorer/detail?dataset_id=ds005516) of the HBN-EEG dataset (should work with other releases too, but is untested)
-- Download [the accompanying Eye-Tracking data](https://fcon_1000.projects.nitrc.org/indi/cmi_healthy_brain_network/downloads/downloads_EEG_R11.html) (requires downloading the full dataset, and optionally stripping out all "EEG" and "Behavioral" data)
+- Download all 11 releases of the HBN-EEG dataset ([nemar](https://nemar.org/dataexplorer/local?search=HBN-EEG))
+- Download the accompanying Eye-Tracking data ([all download pages](https://fcon_1000.projects.nitrc.org/indi/cmi_healthy_brain_network/downloads/)). This requires downloading the full dataset, and optionally stripping out all "EEG" and "Behavioral" data
 
-The exact expected folder structure for this data is described in `create_erp_dataset.py`, which is a script that transforms the two downloaded datasets into one combined BIDS dataset (`extractedDataset`) which is mne-bids-pipeline compatible.
+The exact expected folder structure for this data is described in `create_merged_dataset.py`, which is a script that transforms the downloaded datasets into one combined BIDS dataset (`mergedDataset`) which is mne-bids-pipeline compatible.
 
 In order to parse the SMI Eye-Tracker format used in the HBN dataset, a modification to the mne-bids-pipeline has to be made. This repository features two variants of this modification:
 
