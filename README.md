@@ -20,7 +20,7 @@ After installing the mne-bids-pipeline fork (`pip3 install git+https://github.co
 To run all processing steps up to the synchronization step, execute:
 
 ```
-mne_bids_pipeline --config=config.py --steps init,preprocessing/_01_data_quality,preprocessing/_02_head_pos.py,preprocessing/_03_maxfilter.py,preprocessing/_04_frequency_filter.py,preprocessing/_05b_sync_eyelink.py,preprocessing/_05_regress_artifact.py
+mne_bids_pipeline --config=config.py --steps init,preprocessing/_01_data_quality,preprocessing/_04_frequency_filter.py,preprocessing/_05b_sync_eyelink.py
 ```
 
 After this step, all subjects with valid EEG and Eye-Tracking data should be populated with their respective `*-eyelink_metrics.json` files. To summarize all these files, run `python3 create_overview_from_derivs.py`, which outputs an overview file inside `extractedDataset/derivs`. A sample output is provided in `sync_metrics_overview.xlsx`.
