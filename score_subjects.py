@@ -293,6 +293,8 @@ def main():
     # If the xcorr at 0 lag is negative, subtract 100 points
     xcorr_zero_neg = Criterion(metric="xcorr_zero", direction="below", threshold_value=0, inclusive=False, name="xcorr_zero_lt_0")
 
+    # Another metric that should cause full point subtraction, is an "availability" of "unavailable". These have been pre-filtered in this case
+    
     # ---------- scoring ----------
     # Vectorized penalties
     p_any_group = pd.Series(False, index=df.index)
