@@ -3,7 +3,11 @@ import mne
 bids_root = "extractedDataset"
 deriv_root = "extractedDataset/derivs"
 subjects_dir = None
-subjects = "all" #["NDARAG429CGW"]
+#subjects = ["NDARAB678VYW","NDARDC504KWE","NDARDL033XRG","NDARTK720LER","NDARDZ794ZVP"] #"all" #["NDARAG429CGW"]
+#subjects = ["NDARDZ794ZVP"] #"all" #["NDARAG429CGW"]
+subjects = ["NDARAB678VYW"] ##["NDARKM301DY0"] #"all"
+#subjects = ["NDARAF535XK6"]
+
 ch_types = ["eeg"]
 interactive = False
 sessions = "all"
@@ -63,9 +67,10 @@ ica_use_icalabel = True
 ica_reject = "autoreject_local" #TESTING
 reject = "autoreject_local" #TESTING
 
-
-
+#These are identical, just ensuring compatibility
 sync_eyelink = True
+sync_eye = True
+
 #sync_eventtype_regex = "\\d-trigger=10 Image moves"
 #sync_eventtype_regex_et = "trigger=10 Image moves"
 
@@ -73,17 +78,18 @@ sync_eyelink = True
 #sync_eventtype_regex     = r"contrastTrial_start"
 #sync_eventtype_regex_et  = r"# Message: 15"
 
+sync_eventtype_regex     = r"(?:trialResponse|newPage)" #r"trialResponse"
+sync_eventtype_regex_et  = r"# Message: (?:14|20)" #r"# Message: 14"
 
-sync_eventtype_regex     = r"trialResponse"
-sync_eventtype_regex_et  = r"# Message: 14"
+#sync_eventtype_regex     = r"trialResponse"
+#sync_eventtype_regex_et  = r"# Message: 14"
+
 
 #eog_channels = ["HEOGL", "HEOGR", "VEOGL", "VEOGU"]
-
 
 #eeg_bipolar_channels = {"HEOG": ("HEOGL", "HEOGR"), "VEOG": ("VEOGL", "VEOGU")}
 #eog_channels = ["HEOG", "VEOG"]
 #sync_heog_ch = ("HEOG")
-
 
 
 #eeg_bipolar_channels = {"HEOG": ("E40", "E109"),
@@ -97,10 +103,19 @@ sync_eventtype_regex_et  = r"# Message: 14"
 
 eeg_bipolar_channels = {
     #"HEOG": ("E127", "E126"),
-    "HEOG": ("E109", "E40"), #for some reason, these work better
-    "VEOG": ("E22", "E127"), #left eye
-}
 
+    # Version 1, doesn't work well
+    #### "HEOG": ("E127", "E126"), 
+    #### "VEOG": ("E22", "E127"), #left eye
+
+    # Version 2, works well but not sure why
+    ####"HEOG": ("E109", "E40"),
+    ####"VEOG": ("E22", "E127"), 
+
+    # Version 3, seems to work well?
+    "HEOG": ("E2", "E26"),
+    "VEOG": ("E3", "E8")
+}
 
 
 eog_channels = ["HEOG", "VEOG"]
@@ -108,7 +123,6 @@ eog_channels = ["HEOG", "VEOG"]
 sync_heog_ch = "HEOG"
 
 sync_et_ch = ("L POR X [px]", "R POR X [px]")
-
 
 #sync_et_ch = "xpos_right"
 sync_plot_samps = 3000
@@ -120,3 +134,5 @@ montage = mne.channels.make_standard_montage("GSN-HydroCel-128")
 
 eeg_template_montage = montage
 drop_channels = ["Cz"]
+
+n_jobs = 6
