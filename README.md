@@ -13,7 +13,7 @@ The exact expected folder structure for this data is described in `create_merged
 In order to parse the SMI Eye-Tracker format used in the HBN dataset, a modification to the mne-bids-pipeline has to be made. This repository features two variants of this modification:
 
 - `_05b_sync_eyelink.py` which adds support for the SMI format, plus captures some important metrics about the synchronization quality and stores them in `extractedDataset/derivs/<subject>/eeg/<subject>_task-<task>-eyelink_metrics.json`. This includes some HBN-specific code, like reading the `participants.tsv` from the dataset
-- `_05b_sync_eyelink_nometrics.py` which only adds support for the SMI format and does not include any code that would be specific to only this project
+- `_05b_sync_eye.py` which only adds support for the SMI format and does not include any code that would be specific to only this project. It is intended as a clutter-free extension of the mne-bids-pipeline fork. When using this variant, `/path/to/mne_bids_pipeline/steps/preprocessing/__init__.py` has to be adapted to the new filename
 
 After installing the mne-bids-pipeline fork (`pip3 install git+https://github.com/s-ccs/mne-bids-pipeline.git@temp_dev`), the `_05b_sync_eyelink.py` file has to be updated with the first of these variants (i.e. overwrite the file in `~/.local/lib/python3.12/site-packages/mne_bids_pipeline/steps/preprocessing`).
 
@@ -23,4 +23,7 @@ To run all processing steps up to the synchronization step, execute:
 mne_bids_pipeline --config=config.py --steps init,preprocessing/_01_data_quality,preprocessing/_04_frequency_filter.py,preprocessing/_05b_sync_eyelink.py
 ```
 
-After this step, all subjects with valid EEG and Eye-Tracking data should be populated with their respective `*-eyelink_metrics.json` files. To summarize all these files, run `python3 create_overview_from_derivs.py`, which outputs an overview file inside `extractedDataset/derivs`. A sample output is provided in `sync_metrics_overview.xlsx`.
+After this step, all subjects with valid EEG and Eye-Tracking data should be populated with their respective `*-eyelink_metrics.json` files. To summarize all these files, run `python3 create_overview_from_derivs.py`, which outputs an overview file inside `extractedDataset/derivs`. A sample output is provided in `sync_metrics_overview.xlsx`. The helper scripts `histogram.py` (with a desired formula), or `score_subjects.py` can then be used to visually or numerically assess the quality of the metrics for each subject.
+
+
+
