@@ -1,20 +1,24 @@
 import mne
 
 bids_root = "extractedDataset"
-deriv_root = "extractedDataset/derivs"
+deriv_root = "extractedDataset/derivatives"
 subjects_dir = None
 #subjects = ["NDARAB678VYW","NDARDC504KWE","NDARDL033XRG","NDARTK720LER","NDARDZ794ZVP"] #"all" #["NDARAG429CGW"]
 #subjects = ["NDARDZ794ZVP"] #"all" #["NDARAG429CGW"]
-subjects = ["NDARAB678VYW"] ##["NDARKM301DY0"] #"all"
+#subjects = ["NDARAB678VYW"] ##["NDARKM301DY0"] #"all"
 #subjects = ["NDARAF535XK6"]
+#subjects = ["NDARUC804LKP","NDARVD609JNZ","NDARGN483WFH","NDARFY623ZTE","NDARFN221WW5","NDARXR865BVX","NDARRK528GFZ","NDARKP823HEM","NDARYA857NDW","NDARUR298LVX","NDARWT403LP6","NDARDL033XRG","NDARYJ413BLN","NDARLP413TUX","NDARLM981MEN","NDARKG016KD1","NDARAG788YV9","NDARUA035YJN","NDARNP381RZ4","NDARZG044CJ5","NDARHT518WEM","NDARDX544FJ0","NDARKM199DXW","NDARWC905XUG","NDARYH501UH3","NDARRK146XCZ"]
+subjects = ["NDARUC804LKP"]
 
 ch_types = ["eeg"]
 interactive = False
 sessions = "all"
 task = "symbolSearch"
-task_et = "WISC_ProcSpeed"
+#task_et = "WISC_ProcSpeed"
 
 task_is_rest = True
+rest_epochs_duration = 5
+rest_epochs_overlap = 0
 runs = ["1"]
 et_has_run = False
 et_has_task = True
@@ -46,12 +50,12 @@ on_error = "continue"
 
 # positive / negative feedback
 #conditions = ["HAPPY", "SAD"]
-########conditions = ["# Message: 12XX", "# Message: 13XX"]
-
-########epochs_tmin: float = -0.5
-########epochs_tmax: float = 2.6 # since feedback is so infrequent, long ########epochs are okay
-########
-########baseline: tuple[float | None, float | None] | None = (-0.2, 0)
+##conditions = ["Fixation L"]
+##
+##epochs_tmin: float = -0.5
+##epochs_tmax: float = 2.6 # since feedback is so infrequent, long epochs are okay
+##
+##baseline: tuple[float | None, float | None] | None = (-0.2, 0)
 ###############################################################
 
 
@@ -109,8 +113,8 @@ eeg_bipolar_channels = {
     #### "VEOG": ("E22", "E127"), #left eye
 
     # Version 2, works well but not sure why
-    ####"HEOG": ("E109", "E40"),
-    ####"VEOG": ("E22", "E127"), 
+    ###"HEOG": ("E109", "E40"),
+    ###"VEOG": ("E22", "E127"), 
 
     # Version 3, seems to work well?
     "HEOG": ("E2", "E26"),
