@@ -27,6 +27,46 @@ from ..._report import _open_report
 from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
+# taken from mne.annotations and adapted to support concatenation of "extras" (supported since mne 1.10)
+# without this modification, extras get lost when combined
+def _combine_annotations(
+    one, two, one_n_samples, one_first_samp, two_first_samp, sfreq
+):
+    """Combine a tuple of annotations."""
+    assert one is not None
+    assert two is not None
+    shift = one_n_samples / sfreq  # to the right by the number of samples
+    shift += one_first_samp / sfreq  # to the right by the offset
+    shift -= two_first_samp / sfreq  # undo its offset
+    onset = np.concatenate([one.onset, two.onset + shift])
+    duration = np.concatenate([one.duration, two.duration])
+    description = np.concatenate([one.description, two.description])
+    ch_names = np.concatenate([one.ch_names, two.ch_names])
+
+    # extras: keep if either side has them
+    extras = None
+    if getattr(one, "extras", None) is not None or getattr(two, "extras", None) is not None:
+        one_extras = list(getattr(one, "extras", []))
+        two_extras = list(getattr(two, "extras", []))
+
+        if not one_extras:
+            one_extras = [None] * len(one.onset)
+        if not two_extras:
+            two_extras = [None] * len(two.onset)
+
+        extras = one_extras + two_extras
+
+    return mne.Annotations(
+        onset,
+        duration,
+        description,
+        orig_time=one.orig_time,
+        ch_names=ch_names,
+        extras=extras,
+    )
+
+
+
 """
 "Pyramid"-like curve to compare the xcorr peak against
 The shape of the pyramid is determined by leftIndex, middleIndex, rightIndex (three corners)
@@ -186,7 +226,6 @@ def read_raw_iview(sample_fname: str, event_fname: str | None = None, cfg: Simpl
                     #TODO use table header here as well
                     extras_dict = {f"extra_{k}": float(val) for k, val in enumerate(parts[5:])}
                     ann_ex.append(extras_dict or None)
-
                                   
                 else:
                     # Mostly table headers, file headers
@@ -319,6 +358,20 @@ def get_input_fnames_sync_eyelink(
         extension=".txt",
     )
 
+    et_txt_events_bids_basename = BIDSPath(
+        subject=subject,
+        session=session,
+        task=et_task,
+        acquisition=cfg.acq,
+        recording=cfg.rec,
+        datatype="beh",
+        root=cfg.bids_root,
+        suffix="et_Events",
+        check=False,
+        extension=".txt",
+    )
+
+
     in_files = dict()
     for run in cfg.runs:
         key = f"raw_run-{run}"
@@ -350,9 +403,18 @@ def get_input_fnames_sync_eyelink(
                 et_bids_basename_temp = et_txt_bids_basename.copy()
                 if cfg.et_has_run:
                     et_bids_basename_temp.update(run=run)
+
                 if not os.path.isfile(et_bids_basename_temp):
-                    logger.error(**gen_log_kwargs(message=f"Also didn't find {et_bids_basename_temp} file, one of .asc, .edf or .txt needs to exist for ET sync."))
-                    raise FileNotFoundError(f"For run {run}, could neither find .asc, .edf nor .txt eye-tracking file. Please double-check the file names.")
+
+                    # Try Eventsfile
+                    et_bids_basename_temp = et_txt_events_bids_basename.copy()
+                    if cfg.et_has_run:
+                        et_bids_basename_temp.update(run=run)
+
+                    if not os.path.isfile(et_bids_basename_temp):
+
+                        logger.error(**gen_log_kwargs(message=f"Also didn't find {et_bids_basename_temp} file, one of .asc, .edf or .txt needs to exist for ET sync."))
+                        raise FileNotFoundError(f"For run {run}, could neither find .asc, .edf nor .txt eye-tracking file. Please double-check the file names.")
 
         key = f"et_run-{run}"
         in_files[key] = et_bids_basename_temp
@@ -382,7 +444,7 @@ def sync_eyelink(
     
     logger.info(**gen_log_kwargs(message=f"Found the following eye-tracking files: {et_fnames}"))
     out_files = dict()
-    bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
+    bids_basename = raw_fnames[0].copy().update(processing=None, split=None) #, run=None)
     out_files["eyelink"] = bids_basename.copy().update(processing="eyelink", suffix="raw")
     del bids_basename
 
@@ -437,6 +499,7 @@ def sync_eyelink(
 
         shared_events=np.nan,
         mean_abs_sync_error_ms=np.nan,
+        median_abs_sync_error_ms=np.nan,
         within_1_sample=np.nan,
         within_4_samples=np.nan,
         regression_slope=np.nan,
@@ -487,17 +550,25 @@ def sync_eyelink(
             # Attempt to find corresponding events file (if it exists)
             event_fname = None
             base_root = os.path.splitext(str(et_fname))[0]
-            logger.info(**gen_log_kwargs(message=f"Looking for {str(base_root + '_Events.txt')} "))
-            if os.path.isfile(base_root + '_Events.txt'):
-                event_fname = base_root + '_Events.txt'
+            # Subjects that have no regular samples file but only an Events file
+            # Will already have their _Events file read at this point
+            if(base_root.endswith('_Events')):
                 metrics["et_has_eventfile"] = True
+                metrics["et_has_samplefile"] = False
+                event_fname = base_root + '.txt'
+            else:
+                logger.info(**gen_log_kwargs(message=f"Looking for {str(base_root + '_Events.txt')} "))
+                if os.path.isfile(base_root + '_Events.txt'):
+                    event_fname = base_root + '_Events.txt'
+                    metrics["et_has_eventfile"] = True
+                    metrics["et_has_samplefile"] = True
 
             raw_et, et_eventfile_matches, et_unknown_events, sfreq_est, et_broken_values = read_raw_iview(str(et_fname), event_fname, cfg)
             metrics["et_eventfile_matches"] = et_eventfile_matches[0]
             metrics["et_eventfile_matches_filtered"] = et_eventfile_matches[1]
             metrics["et_unknown_events"] = et_unknown_events
             metrics["et_sfreq_est"] = sfreq_est
-            metrics["et_broken_values"] = et_broken_values
+            metrics["et_nan_values"] = et_broken_values
             print("BROKEN " + str(et_broken_values))
         else:
             
@@ -527,18 +598,18 @@ def sync_eyelink(
         #logger.info(**gen_log_kwargs(message=f"{et_sync_times}"))
         #logger.info(**gen_log_kwargs(message=f"{sync_times}"))
 
-        _num_nans_this = 0
+        #_num_nans_this = 0
         # Check whether the eye-tracking data contains nan values. If yes replace them with zeros.
         if np.isnan(raw_et.get_data()).any():
 
             # Set all nan values in the eye-tracking data to 0 (to make resampling possible)
             # TODO: Decide whether this is a good approach or whether interpolation (e.g. of blinks) is useful
             # TODO: Decide about setting the values (e.g. for blinks) back to nan after synchronising the signals
-            _num_nans_this = int(np.isnan(raw_et.get_data()).sum())
+            #_num_nans_this = int(np.isnan(raw_et.get_data()).sum())
             np.nan_to_num(raw_et._data, copy=False, nan=0.0)
             logger.info(**gen_log_kwargs(message=f"The eye-tracking data contained nan values. They were replaced with zeros."))
 
-        metrics["et_nan_values"] = _num_nans_this
+        #metrics["et_nan_values"] = _num_nans_this
         metrics["eeg_nan_values"] = int(np.isnan(raw._data).sum())
 
         et_pre_n, et_pre_f   = raw_et.n_times, float(raw_et.info["sfreq"])
@@ -566,7 +637,7 @@ def sync_eyelink(
                 raw_et.annotations.description[idx] =  "ET_" + desc
 
 
-        comb = mne.annotations._combine_annotations(
+        comb = _combine_annotations(
             raw.annotations,
             raw_et.annotations,
             0,
@@ -581,7 +652,7 @@ def sync_eyelink(
         # Shift EEG annotations back; leave ET as-is
         comb.onset[~is_et] -= float(raw.first_samp) / float(raw.info["sfreq"])
 
-        raw.set_annotations(mne.Annotations(onset=comb.onset, duration=comb.duration, description=comb.description, orig_time=None))
+        raw.set_annotations(mne.Annotations(onset=comb.onset, duration=comb.duration, description=comb.description, orig_time=None, extras=comb.extras))
 
 
         msg = f"Saving synced data to disk."
@@ -715,6 +786,10 @@ def sync_eyelink(
                 1. if the graph crosses y=0 within 1500 samples, take this as region marker
                 2. else, take the most prominent peak within 1500 samples
                 3. if there is no peak, just cut off at 1500
+
+                TODO: maybe only use this as fallback, and instead check first if the spike is already very clean
+                (e.g. singular spike within -300 to 300, prominent valleys close to this spike). only if it's not,
+                then use the previous method (could help with xcorr curves that are too high up and cross y=0 very late)
                 """
 
                 limit_left = -1500 # values relative to midpoint
@@ -765,10 +840,28 @@ def sync_eyelink(
                 denom = np.linalg.norm(xcorr_spike) * np.linalg.norm(templ_unit_plot_spike)
 
                 cos_sim = float(np.dot(xcorr_spike, templ_unit_plot_spike) / denom) if denom > 0 else np.nan
+
+                ##### cosine similarity to template curve, if it was shifted to the peak of xcorr curve
+
+                L = templ_unit_plot_spike.size
+                shift = int(j1 - midpoint)
+                tmpl_shifted = np.zeros_like(templ_unit_plot_spike)
+                if -L < shift < L:
+                    if shift >= 0:
+                        tmpl_shifted[shift:] = templ_unit_plot_spike[: L - shift]
+                    else:  # shift < 0
+                        tmpl_shifted[: L + shift] = templ_unit_plot_spike[-shift:]
+
+                denom_shift = np.linalg.norm(xcorr_spike) * np.linalg.norm(tmpl_shifted)
+                cos_sim_peak = float(np.dot(xcorr_spike, tmpl_shifted) / denom_shift) if denom_shift > 0 else np.nan
+
+                #####
+
                 rmse = float(np.sqrt(np.mean((xcorr_spike - templ_unit_plot_spike) ** 2)))
                 dinf = float(np.max(np.abs(xcorr_spike - templ_unit_plot_spike)))
                 # Save metrics
                 metrics[f"xcorr_cosine_similarity{suffix}"] = cos_sim
+                metrics[f"xcorr_cosine_similarity_peakaligned{suffix}"] = cos_sim_peak
                 metrics[f"xcorr_rmse{suffix}"] = rmse
                 metrics[f"xcorr_dinf{suffix}"] = dinf
                 metrics[f"xcorr_template_steepness_left{suffix}"] = float(xcorr[j1]) / -limit_left
@@ -868,7 +961,7 @@ def sync_eyelink(
     
 
     metrics["mean_abs_sync_error_ms"] = (float(np.mean(np.abs(resids))) * 1000.0 if resids.size > 0 else np.nan)
-
+    metrics["median_abs_sync_error_ms"] = (float(np.median(np.abs(resids))) * 1000.0 if resids.size > 0 else np.nan)
 
     if len(raw_onsets):
         _diff_samples_abs = np.abs((np.array(raw_onsets) - np.array(et_onsets)) * float(raw.info["sfreq"]))
