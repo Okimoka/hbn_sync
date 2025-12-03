@@ -6,7 +6,7 @@ This project aims to curate and synchronize EEG and Eye-Tracking data from the [
 # Instructions
 
 - Download all 11 releases of the HBN-EEG dataset ([nemar](https://nemar.org/dataexplorer/local?search=HBN-EEG))
-- Download the accompanying Eye-Tracking data ([all download pages](https://fcon_1000.projects.nitrc.org/indi/cmi_healthy_brain_network/downloads/)). This requires downloading the full dataset, and optionally stripping out all "EEG" and "Behavioral" data
+- Download the accompanying Eye-Tracking and Behavioral data from each release of interest ([all download pages](https://fcon_1000.projects.nitrc.org/indi/cmi_healthy_brain_network/downloads/))
 
 The exact expected folder structure for this data is described in `create_merged_dataset.py`, which is a script that transforms the downloaded datasets into one combined BIDS dataset (`mergedDataset`) which is mne-bids-pipeline compatible.
 
