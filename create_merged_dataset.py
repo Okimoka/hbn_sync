@@ -35,19 +35,19 @@ DATASET/
 │  └─ ...                            # for all subjects
 │
 └─ EEG/                               # 11 BIDS releases (randomly named)
-├─ release1_any_name/
-│  ├─ dataset_description.json
-│  ├─ participants.tsv
-│  ├─ sub-NDARAB977GFB/
-│  │  └─ eeg/
-│  │     ├─ sub-NDARAB977GFB_task-ThePresent_eeg.set
-│  │     ├─ sub-NDARAB977GFB_task-ThePresent_eeg.json
-│  │     ├─ sub-NDARAB977GFB_task-ThePresent_channels.tsv
-│  │     ├─ sub-NDARAB977GFB_task-ThePresent_events.tsv
-│  │     └─ ...
-│  └─ ...                         # for all subjects in this release
-└─ release2/
-└─ ...
+    ├─ release1_any_name/
+    │  ├─ dataset_description.json
+    │  ├─ participants.tsv
+    │  ├─ sub-NDARAB977GFB/
+    │  │  └─ eeg/
+    │  │     ├─ sub-NDARAB977GFB_task-ThePresent_eeg.set
+    │  │     ├─ sub-NDARAB977GFB_task-ThePresent_eeg.json
+    │  │     ├─ sub-NDARAB977GFB_task-ThePresent_channels.tsv
+    │  │     ├─ sub-NDARAB977GFB_task-ThePresent_events.tsv
+    │  │     └─ ...
+    │  └─ ...                         # for all subjects in this release
+    └─ release2/
+    └─ ...
 
 """
 
