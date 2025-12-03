@@ -105,12 +105,35 @@ def integrate_et(et_root: Path, merged_root: Path, script_dir: Path):
         #if subject_id < start_subject:
         #    continue
 
+        # ET data is inside "<id>/Eyetracking"
+        # Previous version of this script had them directly inside subject folder
+        et_subj_root = subj / "Eyetracking"
+        if not et_subj_root.exists() or not et_subj_root.is_dir():
+            log(f"Warning: {subject_id} has no Eyetracking folder, skipping")
+            continue
+            #log(f"Warning: {subject_id} has no Eyetracking folder, using directly contained ET")
+            #et_subj_root = subj
+    
+        misc_subj_root = subj / "Behavioral"
+        if misc_subj_root.exists() and misc_subj_root.is_dir():
+            misc_dir = merged_root / f"sub-{subject_id}" / "misc"
+            misc_dir.mkdir(parents=True, exist_ok=True)
+            for item in sorted(misc_subj_root.iterdir()):
+                # symlink both files and directories as-is
+                dst = misc_dir / item.name
+                _symlink(item, dst)
+        else:
+            log(f"Warning: {subject_id} has no Behavioral folder, skipping misc integration")
+    
+
         validate_subject_et_structure(subj, subject_id)
 
         # TODO currently only handling txt, tsv likely impossible to analyze
-        txt_dir = subj / "txt"
-        if not txt_dir.exists():
-            continue  # no TXT for this subject
+        txt_dir = et_subj_root / "txt"
+        if not txt_dir.exists() or not txt_dir.is_dir():
+            #log(f"No TXT folder for subject {subject_id} at {txt_dir}, skipping") # too much noise
+            continue
+
 
         beh_dir = merged_root / f"sub-{subject_id}" / "beh"
         beh_dir.mkdir(parents=True, exist_ok=True)
