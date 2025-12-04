@@ -1,5 +1,5 @@
 This folder contains helper scripts to download and extract the full HBN and HBN-EEG datasets. \
-`launch_scripts` contains bash scripts so everything can be ran easily using `sbatch start_XYZ.sh` on a lustre cluster.
+`launch_scripts` contains bash scripts so everything can be ran easily using `sbatch launch_scripts/start_XYZ.sh` on a lustre cluster.
 
 In short: \
 `dl_nemar.py` downloads the HBN-EEG zips into nemar_zips \
