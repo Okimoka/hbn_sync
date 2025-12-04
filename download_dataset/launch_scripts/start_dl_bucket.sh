@@ -6,4 +6,4 @@
 #SBATCH --time=2-05:00:00
 #SBATCH --partition=cpu_il
 
-python3 ../dl_bucket.py
+python3 dl_bucket.py
